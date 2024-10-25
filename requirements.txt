@@ -9,5 +9,4 @@ instructor
 pandas
 pathlib
 
-
-page_functions
+random

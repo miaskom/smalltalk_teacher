@@ -137,8 +137,9 @@ def sidebar():
         """, unsafe_allow_html=True)
 
     if st.button("Let's talk about...", use_container_width=True): 
-           generate_new_smalltalk(lang, level, subject, simulate_ai)
-           navigate_to("Page 1")
+            generate_new_smalltalk(lang, level, subject, simulate_ai)
+            if st.session_state.page != "Page 1":
+                navigate_to("Page 1")
     
 
 #

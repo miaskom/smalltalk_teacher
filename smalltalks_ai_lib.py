@@ -9,7 +9,7 @@ import instructor  # nakładka na OpenAI pozwalająca na zwracanie przez OpenAI 
                    # np. na potrzeby zdefiniowania struktury response'u JSONa z OpenAI 
 import pandas as pd
 from pathlib import Path
-
+import random
 
 # EMBEDDING_MODEL = "text-embedding-3-large"
 # EMBEDDING_DIM = 3072
@@ -24,6 +24,24 @@ T2SPEECH_VOICE_ENG = "echo"
 T2SPEECH_VOICE_ITA = "nova"
 AUDIO_TRANSCRIBE_MODEL = "whisper-1"
 MP3_PATH = Path("mp3") 
+
+class Questions(BaseModel):
+    question_1: str
+    question_2: str
+    question_3: str
+    question_4: str
+    question_5: str
+    question_6: str
+    question_7: str
+    question_8: str
+    question_9: str
+    question_10: str
+    question_11: str
+    question_12: str
+    question_13: str
+    question_14: str
+    question_15: str
+   
 
 
 #
@@ -87,7 +105,7 @@ def transcribe_audio_to_text(audio_path):
 
 
 
-#funkcja wysyla zapytanie do openAI i zwraca odpowiedź
+#funkcja wysyla zapytanie do openAI i zwraca odpowiedź jako JSON o strukturze zdefiniowanej w klasie Questions
 def get_chatbot_response(system_prompt, user_prompt): #, pamiec_chata):
     #każdy wpis dla OpenAI musi mieć min. 2 pola
     #  role: system/user/assistant <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<!!!!!!!!!!!!
@@ -105,12 +123,18 @@ def get_chatbot_response(system_prompt, user_prompt): #, pamiec_chata):
     messages_4_chat.append({"role": "user", "content": user_prompt})
 
     #wywołaj chatGPT i przekaź mu zapytanie z zapamiętaną historią
-    response = get_openai_client().chat.completions.create(
+    instructor_openai_client = instructor.from_openai(get_openai_client())
+    queries = instructor_openai_client.chat.completions.create(
         model= GPT_MODEL, #stała z nazwą modelu jakiego użyć - zdefiniowana u góry na początku pliku
-        messages= messages_4_chat
+        messages= messages_4_chat,
+        response_model= Questions
     )
-    #zwróć odpowiedź chat
-    return response.choices[0].message.content
+    
+    # Konwersja instancji na słownik i losowy wybór pytania
+    random_question = random.choice( list(queries.dict().values()) )
+
+    #zwróć odpowiedź chata
+    return random_question  # model_dump pozwala zrzucić odpowiedź JSON do struktury Pytonowej w celu wyświetlenia/użycia
 
 
 # Funkcja do odczytania aktualnego licznika ID konwersacji z pliku
@@ -164,7 +188,7 @@ def generate_new_smalltalk( lang: str,
         return
     
     st.session_state["smalltalk_entry"].system_prompt_txt=f'Jako nauczyciel prowadzisz krótkie konwersacje z uczniem w języku {st.session_state["smalltalk_entry"].lang} na poziomie {st.session_state["smalltalk_entry"].level}. Uczeń posługuje się językiem polskim.'
-    st.session_state["smalltalk_entry"].smalltalk_prompt_txt=f'Przygotuj test składający się z 15 różnych pytań w języku {st.session_state["smalltalk_entry"].lang}m dla mnie jako ucznia na poziomie: {st.session_state["smalltalk_entry"].level}, z dziedziny: {st.session_state["smalltalk_entry"].subject}. Te pytania mają być różne i nie powtarzające się a następnie wybierz losowo 1 z nich i zadaj mi to 1 pytanie. I nie pytaj "What is money?". Zadaj mi tylko 1 pytanie z listy, nie wyświetlaj niczego poza samą treścią tego pytania!'
+    st.session_state["smalltalk_entry"].smalltalk_prompt_txt=f'Przygotuj test składający się z 15 różnych pytań w języku {st.session_state["smalltalk_entry"].lang}m dla mnie jako ucznia na poziomie: {st.session_state["smalltalk_entry"].level}, z dziedziny: {st.session_state["smalltalk_entry"].subject}. Te pytania mają być różne i nie powtarzające się. I nie pytaj "What is money?"'
     st.session_state["smalltalk_entry"].ai_query_txt= get_chatbot_response(system_prompt = st.session_state["smalltalk_entry"].system_prompt_txt,
                                                                            user_prompt   = st.session_state["smalltalk_entry"].smalltalk_prompt_txt)
     st.session_state["smalltalk_entry"].ai_query_mp3_path = ""
